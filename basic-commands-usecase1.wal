@@ -1,0 +1,29 @@
+ËdefVar --name connection --type DbConnection
+defVar --name excelPath --type String
+defVar --name excelEmployees --type Excel
+defVar --name tableEmployee --type DataTable
+defVar --name count --type Numeric
+defVar --name employeesID --type String
+defVar --name name --type String
+defVar --name extendedVacation --type Numeric
+defVar --name daysOff --type Numeric
+defVar --name resultVacation --type Numeric
+defVar --name resultSheet --type Numeric
+sqlServerConnect --connectionstring "Server=JCPULIDOPW10\\BPSQL2017;Database=dbDatabaseAdvanced;Trusted_Connection=True;" connection=connection
+getSpecialFolder --folder "Desktop" excelPath=value
+excelOpen --file "${excelPath}/database/excelEmployees.xlsx" --savechanges  excelEmployees=value
+beginSub --name calculationEmployeeVacation
+sqlExecuteReader --connection ${connection} --statement "select employeesID,name,extendedVacation,daysOff  from tbEmployees\r\nwhere status=\'ACTIVE\' and extendedVacation=0" tableEmployee=value
+for --variable ${count} --from 1 --to ${tableEmployee.Rows} --step 1
+	mapTableRow --dataTable ${tableEmployee} --row ${count} --mappings "name=employeesID=${employeesID},name=name=${name},name=extendedVacation=${extendedVacation},name=daysOff=${daysOff}"
+	if --left "${extendedVacation}" --operator "Equal_To" --right 2
+		evaluate --expression "${daysOff}+60" resultVacation=value
+	else
+		evaluate --expression "${daysOff}+30" resultVacation=value
+	endIf
+	evaluate --expression "${count}+1" resultSheet=value
+	excelSet --value "${employeesID}" --file ${excelEmployees} --getfirstsheet  --usingcell  --cell "a${resultSheet}"
+	excelSet --value "${name}" --file ${excelEmployees} --getfirstsheet  --usingcell  --cell "b${resultSheet}"
+	excelSet --value "${resultVacation}" --file ${excelEmployees} --getfirstsheet  --usingcell  --cell "c${resultSheet}"
+next
+endSub*	20.12.0.0
